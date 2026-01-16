@@ -25,8 +25,20 @@ async function confirmAction(toolName: string, args: Record<string, unknown>): P
     console.log(`   Tool: ${toolName}`);
     console.log(`   Args: ${JSON.stringify(args, null, 2)}`);
 
-    const answer = await prompt("\x1b[33mProceed? (y/n): \x1b[0m");
-    return answer.toLowerCase() === "y" || answer.toLowerCase() === "yes";
+    // Loop until we get a valid y/n response
+    while (true) {
+        const answer = await prompt("\x1b[33mProceed? (y/n): \x1b[0m");
+        const normalized = answer.toLowerCase().trim();
+
+        if (normalized === "y" || normalized === "yes") {
+            return true;
+        }
+        if (normalized === "n" || normalized === "no") {
+            return false;
+        }
+
+        console.log("   Please enter 'y' or 'n'");
+    }
 }
 
 function onToolCall(name: string, args: Record<string, unknown>): void {
