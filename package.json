@@ -1,0 +1,39 @@
+{
+  "name": "gemini-cli-agent",
+  "version": "1.0.0",
+  "description": "A simple agentic CLI using Gemini",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "gemini-agent": "./dist/index.js"
+  },
+  "scripts": {
+    "dev": "tsx src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": [
+    "gemini",
+    "cli",
+    "agent",
+    "ai"
+  ],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/node": "^25.0.9",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3"
+  },
+  "dependencies": {
+    "@google/genai": "^1.37.0",
+    "ai": "^6.0.39",
+    "ai-gateway-provider": "^3.0.2",
+    "dotenv": "^16.5.0",
+    "openai": "^6.16.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
