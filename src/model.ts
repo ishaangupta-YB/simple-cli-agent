@@ -1,7 +1,6 @@
 import "dotenv/config";
 import { GoogleGenAI } from "@google/genai";
 
-
 const CF_ACCOUNT_ID = process.env.CF_ACCOUNT_ID!;
 const CF_GATEWAY_NAME = process.env.CF_GATEWAY_NAME!;
 const CF_AIG_TOKEN = process.env.CF_AIG_TOKEN!;

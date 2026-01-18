@@ -29,16 +29,13 @@ function validatePath(inputPath: string): { valid: boolean; resolved: string; su
         return { valid: true, resolved };
     }
 
-    // Try to find similar files in parent directory for helpful suggestions
     const dir = path.dirname(resolved);
     const basename = path.basename(resolved).toLowerCase();
 
     if (fs.existsSync(dir)) {
         const files = fs.readdirSync(dir);
         const similar = files.find(f => f.toLowerCase().includes(basename) || basename.includes(f.toLowerCase()));
-        if (similar) {
-            return { valid: false, resolved, suggestion: path.join(dir, similar) };
-        }
+        if (similar) return { valid: false, resolved, suggestion: path.join(dir, similar) };
     }
 
     return { valid: false, resolved };

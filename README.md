@@ -1,15 +1,16 @@
 # Gemini CLI Agent
 
-A simple, production-ready agentic CLI powered by Google Gemini. Features an interactive loop with tool calling, human-in-the-loop confirmations, and conversation memory.
+A simple, production-ready agentic CLI powered by Google Gemini. Features an interactive loop with tool calling, human-in-the-loop confirmations, multiline input, and conversation memory.
 
 ## Features
 
 - **Agentic Loop** - Automatically executes tools and continues until task completion
 - **Conversation Memory** - Maintains full chat history across turns
 - **Human-in-the-Loop** - Confirms destructive actions (write, delete) before execution
+- **Max Iterations Control** - Asks user permission to continue when iteration limit reached
+- **Multiline Input** - Paste code blocks and multi-line content using `"""`
 - **Meaningful Errors** - Clear error messages with suggestions ("Did you mean...?")
 - **Context Engineering** - File size limits to prevent context overflow
-- **Escape Hatch** - Max iterations to prevent infinite loops
 - **Modular Design** - Agent class is reusable and configurable
 
 ## Setup
@@ -40,13 +41,10 @@ npm run dev
 
 ```
 🤖 Agent ready. Ask me to explore files in this directory.
-   Type 'exit' or 'quit' to stop.
+   Type /help for commands, """ for multiline input.
 
 You: list files in current directory
 Assistant: The files are: package.json, src/, README.md...
-
-You: read the package.json file
-Assistant: Here are the contents of package.json...
 
 You: create a file called hello.py with a print statement
 ⚠️  Action requires confirmation:
@@ -56,16 +54,33 @@ Proceed? (y/n): y
 [Tool Call] write_file(...)
 Assistant: I've created hello.py with the print statement.
 
-You: exit
+You: /exit
 Goodbye! 👋
 ```
 
-### Special Commands
+### Multiline Input
+
+Use `"""` to enter multiline mode for pasting code or long text:
+
+```
+You: """
+   Entering multiline mode. Type """ on a new line to finish.
+... def hello():
+...     print("Hello World")
+...     return True
+... """
+Assistant: I see you've shared a Python function...
+```
+
+## Commands
 
 | Command | Description |
 |---------|-------------|
-| `exit` / `quit` | Exit the CLI |
-| `clear` | Clear conversation history |
+| `/help` | Show available commands and tools |
+| `/clear` | Clear conversation history |
+| `/exit` | Exit the CLI |
+| `/quit` | Exit the CLI (alias) |
+| `"""` | Start multiline input mode |
 
 ## Available Tools
 
@@ -105,6 +120,10 @@ const agent = new Agent({
         // Your confirmation logic
         return true;
     },
+    onMaxIterationsReached: async (iteration) => {
+        // Ask user if they want to continue
+        return true; // or false to stop
+    },
 });
 
 const response = await agent.run("What files are in this directory?");
@@ -118,9 +137,10 @@ console.log(response.text);
 | `model` | string | `gemini-2.5-flash` | Model to use |
 | `tools` | ToolsMap | undefined | Tools available to agent |
 | `systemInstruction` | string | "You are a helpful assistant." | System prompt |
-| `maxIterations` | number | 15 | Max tool loops (escape hatch) |
+| `maxIterations` | number | 15 | Max tool loops before asking user |
 | `onToolCall` | function | undefined | Logging hook |
-| `confirmAction` | function | undefined | Confirmation hook |
+| `confirmAction` | function | undefined | Confirmation hook for destructive actions |
+| `onMaxIterationsReached` | function | undefined | Hook when max iterations reached |
 
 ## Best Practices Implemented
 
@@ -131,7 +151,7 @@ console.log(response.text);
 | **Meaningful Errors** | "File not found. Did you mean 'data.csv'?" |
 | **Fuzzy Inputs** | Handles `~`, `./`, trims whitespace |
 | **Context Engineering** | 100KB file size limit |
-| **Escape Hatch** | `maxIterations` prevents infinite loops |
+| **Escape Hatch** | `maxIterations` with user prompt to continue |
 | **Human-in-the-Loop** | Destructive actions require confirmation |
 | **Transparency** | `onToolCall` hook logs all tool invocations |
 

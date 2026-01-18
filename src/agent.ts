@@ -20,6 +20,7 @@ export type AgentConfig = {
     maxIterations?: number; // Escape hatch to prevent infinite loops
     onToolCall?: (name: string, args: Record<string, unknown>) => void; // Logging hook
     confirmAction?: (name: string, args: Record<string, unknown>) => Promise<boolean>; // Human-in-the-loop
+    onMaxIterationsReached?: (iteration: number) => Promise<boolean>; // Ask user to continue when max iterations reached
 };
 
 export class Agent {
@@ -31,6 +32,7 @@ export class Agent {
     maxIterations: number;
     onToolCall?: (name: string, args: Record<string, unknown>) => void;
     confirmAction?: (name: string, args: Record<string, unknown>) => Promise<boolean>;
+    onMaxIterationsReached?: (iteration: number) => Promise<boolean>;
 
     constructor(config: AgentConfig = {}) {
         this.client = client;
@@ -41,6 +43,7 @@ export class Agent {
         this.maxIterations = config.maxIterations ?? 15; // Default escape hatch
         this.onToolCall = config.onToolCall;
         this.confirmAction = config.confirmAction;
+        this.onMaxIterationsReached = config.onMaxIterationsReached;
     }
 
     /**
@@ -64,9 +67,19 @@ export class Agent {
      * @param iteration - Current iteration count (internal use)
      */
     async run(input: string | Part[], iteration: number = 0): Promise<GenerateContentResponse> {
-        // Escape hatch: prevent infinite loops
+        // Escape hatch: when max iterations reached, ask user if they want to continue
         if (iteration >= this.maxIterations) {
-            throw new Error(`Agent exceeded maximum iterations (${this.maxIterations}). Stopping to prevent infinite loop.`);
+            if (this.onMaxIterationsReached) {
+                const shouldContinue = await this.onMaxIterationsReached(iteration);
+                if (shouldContinue) {
+                    // Reset iteration count and continue
+                    this.maxIterations = iteration + 15; // Allow 15 more iterations
+                } else {
+                    throw new Error(`Agent stopped after ${iteration} iterations by user request.`);
+                }
+            } else {
+                throw new Error(`Agent exceeded maximum iterations (${this.maxIterations}). Stopping to prevent infinite loop.`);
+            }
         }
 
         // Handle string input or function response parts
@@ -131,7 +144,6 @@ export class Agent {
                         const fnResult = tool.function(...Object.values(toolArgs));
                         result = { result: fnResult };
                     } catch (error) {
-                        // Return meaningful errors, not stack traces
                         result = { error: this.formatError(error, toolName, toolArgs) };
                     }
                 } else {
